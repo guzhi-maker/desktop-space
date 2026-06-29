@@ -474,6 +474,7 @@ input:focus-visible {
 .scene-wrap {
   position: relative;
   min-height: 0;
+  height: 100%;
 }
 
 .pixi-host {
