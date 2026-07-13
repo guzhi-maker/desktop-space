@@ -1,4 +1,4 @@
-﻿import { Application, BaseTexture, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
+import { Application, Assets, Container, Graphics, Sprite, Text, Texture, Ticker } from "pixi.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { OmegaEmotion, OmegaState } from "../types";
 import { ALL_RECIPES } from "../systems/crafting";
@@ -97,18 +97,20 @@ export default function Room2Scene({
     window.addEventListener("keyup", keyUp);
 
     async function init() {
-      const app = new Application({
+      const app = new Application();
+      await app.init({
         width: host.clientWidth,
         height: host.clientHeight,
-        transparent: true,
+        backgroundAlpha: 0,
         antialias: true,
+        resizeTo: host,
       });
       if (disposed) {
         app.destroy(true);
         return;
       }
       appRef.current = app;
-      host.appendChild(app.view as unknown as Node);
+      host.appendChild(app.canvas);
 
       // Background
       const bg = new Graphics();
@@ -207,8 +209,8 @@ export default function Room2Scene({
         app.renderer.resize(host.clientWidth, host.clientHeight);
       window.addEventListener("resize", handleResize);
 
-      app.ticker.add((dt: number) => {
-        const speed = 3.1 * dt;
+      app.ticker.add((ticker: Ticker) => {
+        const speed = 3.1 * ticker.deltaTime;
 
         if (placing && placingId.current) {
           // Move the placing preview
@@ -467,16 +469,7 @@ function renderFurniture(
 }
 
 function loadImageAsTexture(_renderer: any, url: string): Promise<Texture> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const base = new BaseTexture(img);
-      resolve(new Texture(base));
-    };
-    img.onerror = reject;
-    img.src = url;
-  });
+  return Assets.load<Texture>(url);
 }
 
 function drawOmegaFallback(emotion: OmegaEmotion, texture?: Texture) {
@@ -513,4 +506,3 @@ function drawOmegaFallback(emotion: OmegaEmotion, texture?: Texture) {
   root.addChild(glow);
   return root;
 }
-

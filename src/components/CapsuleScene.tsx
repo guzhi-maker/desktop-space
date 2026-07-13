@@ -1,4 +1,4 @@
-import { Application, BaseTexture, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
+import { Application, Assets, Container, Graphics, Sprite, Text, Texture, Ticker } from "pixi.js";
 import { useEffect, useRef, useState } from "react";
 import type { OmegaEmotion } from "../types";
 
@@ -62,11 +62,13 @@ export function CapsuleScene({
     window.addEventListener("keyup", keyUp);
 
     async function init() {
-      const app = new Application({
+      const app = new Application();
+      await app.init({
         width: hostElement.clientWidth,
         height: hostElement.clientHeight,
-        transparent: true,
+        backgroundAlpha: 0,
         antialias: true,
+        resizeTo: hostElement,
       });
 
       if (disposed) {
@@ -75,7 +77,7 @@ export function CapsuleScene({
       }
 
       appRef.current = app;
-      hostElement.appendChild(app.view as unknown as Node);
+      hostElement.appendChild(app.canvas);
 
       // --- Background image layer ---
       try {
@@ -174,8 +176,8 @@ export function CapsuleScene({
       window.addEventListener("resize", handleResize);
 
       // --- Tick loop ---
-      app.ticker.add((dt: number) => {
-        const speed = 3.1 * dt;
+      app.ticker.add((ticker: Ticker) => {
+        const speed = 3.1 * ticker.deltaTime;
         const pos = positionRef.current;
         if (keysRef.current.has("w")) pos.y -= speed;
         if (keysRef.current.has("s")) pos.y += speed;
@@ -268,16 +270,7 @@ function loadImageAsTexture(
   _renderer: import("pixi.js").Renderer,
   url: string
 ): Promise<Texture> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const base = new BaseTexture(img);
-      resolve(new Texture(base));
-    };
-    img.onerror = reject;
-    img.src = url;
-  });
+  return Assets.load<Texture>(url);
 }
 
 /** Draw subtle decoration overlays based on equipped items. */
